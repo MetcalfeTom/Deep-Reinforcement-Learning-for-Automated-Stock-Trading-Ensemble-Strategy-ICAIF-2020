@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "tradebot"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+numpy = "1.16.4"
+pandas = "1.0.3"
+stockstats = "^0.3.2"
+gym = "0.15.3"
+joblib = "0.15.1"
+matplotlib = "3.2.1"
+pytest = ">=5.3.2,<6.0.0"
+setuptools = ">=41.4.0,<42.0.0"
+wheel = ">=0.33.6,<0.34.0"
+stable-baselines = "^2.10.1"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
