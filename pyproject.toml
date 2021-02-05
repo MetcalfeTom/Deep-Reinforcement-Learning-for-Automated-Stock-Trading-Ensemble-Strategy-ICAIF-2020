@@ -5,7 +5,7 @@ description = ""
 authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.5"
 numpy = "1.16.4"
 pandas = "1.0.3"
 stockstats = "^0.3.2"
@@ -16,6 +16,7 @@ pytest = ">=5.3.2,<6.0.0"
 setuptools = ">=41.4.0,<42.0.0"
 wheel = ">=0.33.6,<0.34.0"
 stable-baselines = "^2.10.1"
+tensorflow = "1.15.5"
 
 [tool.poetry.dev-dependencies]
 
