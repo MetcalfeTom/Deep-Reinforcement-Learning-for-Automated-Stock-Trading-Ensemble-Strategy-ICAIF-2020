@@ -8,6 +8,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pickle
+import tensorflow as tf
 
 # shares normalization factor
 # 100 shares per trade
@@ -44,7 +45,7 @@ class StockEnvValidation(gym.Env):
         self.terminal = False
         self.turbulence_threshold = turbulence_threshold
         # initalize state
-        self.state = (
+        self.state = tf.convert_to_tensor(
             [INITIAL_ACCOUNT_BALANCE]
             + self.data.adjcp.values.tolist()
             + [0] * STOCK_DIM
@@ -208,7 +209,7 @@ class StockEnvValidation(gym.Env):
             # print(self.turbulence)
             # load next state
             # print("stock_shares:{}".format(self.state[29:]))
-            self.state = (
+            self.state = tf.convert_to_tensor(
                 [self.state[0]]
                 + self.data.adjcp.values.tolist()
                 + list(self.state[(STOCK_DIM + 1) : (STOCK_DIM * 2 + 1)])
@@ -244,7 +245,7 @@ class StockEnvValidation(gym.Env):
         # self.iteration=self.iteration
         self.rewards_memory = []
         # initiate state
-        self.state = (
+        self.state = tf.convert_to_tensor(
             [INITIAL_ACCOUNT_BALANCE]
             + self.data.adjcp.values.tolist()
             + [0] * STOCK_DIM

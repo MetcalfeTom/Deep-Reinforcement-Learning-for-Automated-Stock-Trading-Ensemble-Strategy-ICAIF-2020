@@ -7,7 +7,7 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import pickle
+import tensorflow as tf
 
 # shares normalization factor
 # 100 shares per trade
@@ -41,7 +41,7 @@ class StockEnvTrain(gym.Env):
         self.data = self.df.loc[self.day, :]
         self.terminal = False
         # initalize state
-        self.state = (
+        self.state = tf.convert_to_tensor(
             [INITIAL_ACCOUNT_BALANCE]
             + self.data.adjcp.values.tolist()
             + [0] * STOCK_DIM
@@ -170,7 +170,7 @@ class StockEnvTrain(gym.Env):
             self.data = self.df.loc[self.day, :]
             # load next state
             # print("stock_shares:{}".format(self.state[29:]))
-            self.state = (
+            self.state = tf.convert_to_tensor(
                 [self.state[0]]
                 + self.data.adjcp.values.tolist()
                 + list(self.state[(STOCK_DIM + 1) : (STOCK_DIM * 2 + 1)])
@@ -204,7 +204,7 @@ class StockEnvTrain(gym.Env):
         self.terminal = False
         self.rewards_memory = []
         # initiate state
-        self.state = (
+        self.state = tf.convert_to_tensor(
             [INITIAL_ACCOUNT_BALANCE]
             + self.data.adjcp.values.tolist()
             + [0] * STOCK_DIM
