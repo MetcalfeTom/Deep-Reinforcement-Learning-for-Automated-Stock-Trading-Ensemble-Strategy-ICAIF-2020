@@ -13,6 +13,13 @@ from config.config import *
 # model
 from model.models import *
 import os
+import coloredlogs
+import tensorflow as tf
+import logging
+
+tf.debugging.set_log_device_placement(True)
+
+coloredlogs.install(level=logging.DEBUG)
 
 
 def run_model() -> None:

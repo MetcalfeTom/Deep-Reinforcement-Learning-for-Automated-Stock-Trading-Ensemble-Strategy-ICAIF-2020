@@ -181,7 +181,10 @@ def get_validation_sharpe(iteration):
 
 
 def run_ensemble_strategy(
-    df: pd.DataFrame, unique_trade_date: pd.DataFrame, rebalance_window: int, validation_window: int
+    df: pd.DataFrame,
+    unique_trade_date: pd.DataFrame,
+    rebalance_window: int,
+    validation_window: int,
 ) -> None:
     """Ensemble Strategy that combines PPO, A2C and DDPG"""
     print("============Start Ensemble Strategy============")
