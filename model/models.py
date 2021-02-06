@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import time
 import gym
+from tqdm import trange
 
 # RL models from stable-baselines
 from stable_baselines import GAIL, SAC
@@ -180,7 +181,7 @@ def get_validation_sharpe(iteration):
 
 
 def run_ensemble_strategy(
-    df, unique_trade_date, rebalance_window, validation_window
+    df: pd.DataFrame, unique_trade_date: pd.DataFrame, rebalance_window: int, validation_window: int
 ) -> None:
     """Ensemble Strategy that combines PPO, A2C and DDPG"""
     print("============Start Ensemble Strategy============")
@@ -203,9 +204,10 @@ def run_ensemble_strategy(
     )
 
     start = time.time()
-    for i in range(
+    progress = trange(
         rebalance_window + validation_window, len(unique_trade_date), rebalance_window
-    ):
+    )
+    for i in progress:
         print("============================================")
         ## initial state is empty
         if i - rebalance_window - validation_window == 0:

@@ -5,7 +5,7 @@ description = ""
 authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.5"
+python = "^3.6.1"
 numpy = "1.16.4"
 pandas = "1.0.3"
 stockstats = "^0.3.2"
@@ -15,8 +15,10 @@ matplotlib = "3.2.1"
 pytest = ">=5.3.2,<6.0.0"
 setuptools = ">=41.4.0,<42.0.0"
 wheel = ">=0.33.6,<0.34.0"
-stable-baselines = "^2.10.1"
-tensorflow = "1.15.5"
+stable-baselines = {extras = ["mpi"], version = "^2.10.1"}
+tensorflow-gpu = "1.15.4"
+coloredlogs = "^15.0"
+tqdm = "^4.56.0"
 
 [tool.poetry.dev-dependencies]
 
