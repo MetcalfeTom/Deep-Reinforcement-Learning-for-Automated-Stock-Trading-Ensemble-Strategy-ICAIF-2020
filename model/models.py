@@ -29,10 +29,15 @@ from env.EnvMultipleStock_train import StockEnvTrain
 from env.EnvMultipleStock_validation import StockEnvValidation
 from env.EnvMultipleStock_trade import StockEnvTrade
 
+import logging
 
-def train_A2C(env_train, model_name, timesteps=25000):
+logger = logging.getLogger(__name__)
+
+
+def train_A2C(env_train, iteration: int, timesteps=30000) -> A2C:
     """A2C model"""
-
+    logger.info("======A2C Training========")
+    model_name = f"A2C_30k_dow_{iteration}"
     start = time.time()
     model = A2C("MlpPolicy", env_train, verbose=0)
     model.learn(total_timesteps=timesteps)
@@ -43,7 +48,10 @@ def train_A2C(env_train, model_name, timesteps=25000):
     return model
 
 
-def train_ACER(env_train, model_name, timesteps=25000):
+def train_ACER(env_train, iteration: int, timesteps=25000) -> ACER:
+
+    model_name = f"ACER_25k_dow_{iteration}"
+
     start = time.time()
     model = ACER("MlpPolicy", env_train, verbose=0)
     model.learn(total_timesteps=timesteps)
@@ -54,10 +62,12 @@ def train_ACER(env_train, model_name, timesteps=25000):
     return model
 
 
-def train_DDPG(env_train, model_name, timesteps=10000):
+def train_DDPG(env_train, iteration: int, timesteps=10000) -> DDPG:
     """DDPG model"""
 
+    logger.info("======DDPG Training========")
     # add the noise objects for DDPG
+    model_name = "DDPG_10k_dow_{}".format(iteration)
     n_actions = env_train.action_space.shape[-1]
     param_noise = None
     action_noise = OrnsteinUhlenbeckActionNoise(
@@ -76,9 +86,11 @@ def train_DDPG(env_train, model_name, timesteps=10000):
     return model
 
 
-def train_PPO(env_train, model_name, timesteps=50000):
+def train_PPO(env_train, iteration: int, timesteps=100000) -> PPO2:
     """PPO model"""
+    logger.info("======PPO Training========")
 
+    model_name = "PPO_100k_dow_{}".format(iteration)
     start = time.time()
     model = PPO2("MlpPolicy", env_train, ent_coef=0.005, nminibatches=8)
     # model = PPO2('MlpPolicy', env_train, ent_coef = 0.005)
@@ -118,7 +130,7 @@ def DRL_prediction(
     model,
     name,
     last_state,
-    iter_num,
+    iter_num: int,
     unique_trade_date,
     rebalance_window,
     turbulence_threshold,
@@ -154,11 +166,13 @@ def DRL_prediction(
             last_state = env_trade.render()
 
     df_last_state = pd.DataFrame({"last_state": last_state})
-    df_last_state.to_csv("results/last_state_{}_{}.csv".format(name, i), index=False)
+    df_last_state.to_csv(
+        "results/last_state_{}_{}.csv".format(name, iter_num), index=False
+    )
     return last_state
 
 
-def DRL_validation(model, test_data, test_env, test_obs) -> None:
+def DRL_validation(model, test_data, test_env: DummyVecEnv, test_obs) -> None:
     ###validation process###
     for i in range(len(test_data.index.unique())):
         action, _states = model.predict(test_obs)
@@ -192,10 +206,6 @@ def run_ensemble_strategy(
     # of the previous model to the current model as the initial state
     last_state_ensemble = []
 
-    ppo_sharpe_list = []
-    ddpg_sharpe_list = []
-    a2c_sharpe_list = []
-
     model_use = []
 
     # based on the analysis of the in-sample data
@@ -210,6 +220,9 @@ def run_ensemble_strategy(
     progress = trange(
         rebalance_window + validation_window, len(unique_trade_date), rebalance_window
     )
+
+    models_to_train = ((train_ACER, "ACER"), (train_PPO, "PPO"))
+
     for i in progress:
         print("============================================")
         ## initial state is empty
@@ -283,68 +296,27 @@ def run_ensemble_strategy(
         )
         # print("training: ",len(data_split(df, start=20090000, end=test.datadate.unique()[i-rebalance_window]) ))
         # print("==============Model Training===========")
-        print("======A2C Training========")
-        model_a2c = train_A2C(
-            env_train, model_name="A2C_30k_dow_{}".format(i), timesteps=30000
-        )
-        print(
-            "======A2C Validation from: ",
-            unique_trade_date[i - rebalance_window - validation_window],
-            "to ",
-            unique_trade_date[i - rebalance_window],
-        )
-        DRL_validation(
-            model=model_a2c, test_data=validation, test_env=env_val, test_obs=obs_val
-        )
-        sharpe_a2c = get_validation_sharpe(i)
-        print("A2C Sharpe Ratio: ", sharpe_a2c)
 
-        print("======PPO Training========")
-        model_ppo = train_PPO(
-            env_train, model_name="PPO_100k_dow_{}".format(i), timesteps=100000
-        )
-        print(
-            "======PPO Validation from: ",
-            unique_trade_date[i - rebalance_window - validation_window],
-            "to ",
-            unique_trade_date[i - rebalance_window],
-        )
-        DRL_validation(
-            model=model_ppo, test_data=validation, test_env=env_val, test_obs=obs_val
-        )
-        sharpe_ppo = get_validation_sharpe(i)
-        print("PPO Sharpe Ratio: ", sharpe_ppo)
+        models = []
+        sharpes = []
+        for train_func, model_name in models_to_train:
+            model_a2c, sharpe_a2c = train_and_eval(
+                train_func,
+                env_train,
+                env_val,
+                i,
+                obs_val,
+                rebalance_window,
+                unique_trade_date,
+                validation,
+                validation_window,
+                model_name=model_name,
+            )
+            models.append(model_a2c)
+            sharpes.append(sharpe_a2c)
 
-        print("======DDPG Training========")
-        model_ddpg = train_DDPG(
-            env_train, model_name="DDPG_10k_dow_{}".format(i), timesteps=10000
-        )
-        # model_ddpg = train_TD3(env_train, model_name="DDPG_10k_dow_{}".format(i), timesteps=20000)
-        print(
-            "======DDPG Validation from: ",
-            unique_trade_date[i - rebalance_window - validation_window],
-            "to ",
-            unique_trade_date[i - rebalance_window],
-        )
-        DRL_validation(
-            model=model_ddpg, test_data=validation, test_env=env_val, test_obs=obs_val
-        )
-        sharpe_ddpg = get_validation_sharpe(i)
-
-        ppo_sharpe_list.append(sharpe_ppo)
-        a2c_sharpe_list.append(sharpe_a2c)
-        ddpg_sharpe_list.append(sharpe_ddpg)
-
-        # Model Selection based on sharpe ratio
-        if (sharpe_ppo >= sharpe_a2c) & (sharpe_ppo >= sharpe_ddpg):
-            model_ensemble = model_ppo
-            model_use.append("PPO")
-        elif (sharpe_a2c > sharpe_ppo) & (sharpe_a2c > sharpe_ddpg):
-            model_ensemble = model_a2c
-            model_use.append("A2C")
-        else:
-            model_ensemble = model_ddpg
-            model_use.append("DDPG")
+        idx = sharpes.index(max(sharpes))
+        model_ensemble = models[idx]
         ############## Training and Validation ends ##############
 
         ############## Trading starts ##############
@@ -371,3 +343,30 @@ def run_ensemble_strategy(
 
     end = time.time()
     print("Ensemble Strategy took: ", (end - start) / 60, " minutes")
+
+
+def train_and_eval(
+    train_func,
+    env_train,
+    env_val,
+    i,
+    obs_val,
+    rebalance_window,
+    unique_trade_date,
+    validation,
+    validation_window,
+    model_name: str,
+):
+    model_ddpg = train_func(env_train, iteration=i)
+    logger.info(
+        f"======{model_name} Validation from: ",
+        unique_trade_date[i - rebalance_window - validation_window],
+        "to ",
+        unique_trade_date[i - rebalance_window],
+    )
+    DRL_validation(
+        model=model_ddpg, test_data=validation, test_env=env_val, test_obs=obs_val
+    )
+    sharpe_ddpg = get_validation_sharpe(i)
+
+    return model_ddpg, sharpe_ddpg
