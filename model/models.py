@@ -206,8 +206,6 @@ def run_ensemble_strategy(
     # of the previous model to the current model as the initial state
     last_state_ensemble = []
 
-    model_use = []
-
     # based on the analysis of the in-sample data
     # turbulence_threshold = 140
     insample_turbulence = df[(df.datadate < 20151000) & (df.datadate >= 20090000)]
@@ -221,7 +219,7 @@ def run_ensemble_strategy(
         rebalance_window + validation_window, len(unique_trade_date), rebalance_window
     )
 
-    models_to_train = ((train_ACER, "ACER"), (train_PPO, "PPO"))
+    models_to_train = ((train_PPO, "PPO"),)
 
     for i in progress:
         print("============================================")
@@ -359,10 +357,9 @@ def train_and_eval(
 ):
     model_ddpg = train_func(env_train, iteration=i)
     logger.info(
-        f"======{model_name} Validation from: ",
-        unique_trade_date[i - rebalance_window - validation_window],
-        "to ",
-        unique_trade_date[i - rebalance_window],
+        f"======{model_name} Validation from: "
+        f"{unique_trade_date[i - rebalance_window - validation_window]} to "
+        f"{unique_trade_date[i - rebalance_window]}"
     )
     DRL_validation(
         model=model_ddpg, test_data=validation, test_env=env_val, test_obs=obs_val
